@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/jackyb/go-sdl2/sdl_mixer"
-	"github.com/jackyb/go-sdl2/sdl"
+	"bytes"
 	"code.google.com/p/go9p/p"
 	"code.google.com/p/go9p/p/srv"
 	"code.google.com/p/goplan9/plumb"
-	"strconv"
 	"fmt"
+	"github.com/jackyb/go-sdl2/sdl"
+	"github.com/jackyb/go-sdl2/sdl_mixer"
 	"os"
-	"bytes"
+	"strconv"
 	"strings"
 )
 
@@ -23,15 +23,15 @@ const (
 
 type Music struct {
 	srv.File
-	playlist	*Playlist
-	queue		*Queue
-	mode		Mode
-	mixer		*mix.Music
+	playlist *Playlist
+	queue    *Queue
+	mode     Mode
+	mixer    *mix.Music
 }
 
 type Playlist struct {
 	srv.File
-	repeat	bool
+	repeat  bool
 	current int
 	entries []string
 }
@@ -42,26 +42,26 @@ type Queue struct {
 }
 
 type List struct {
-	entry	string
-	next	*List
+	entry string
+	next  *List
 }
 
 func Plumb(mode, msg string) {
-    attr := &plumb.Attribute{
-        Name:  "mode",
-        Value: mode,
-    }
-    message := &plumb.Message{
-       Src:  "mGu",
-        Dst:  "music",
-        Dir:  "/mnt/mGu",
-        Type: "text",
-        Attr: attr,
-        Data: []byte(msg),
-    }
-    var buf bytes.Buffer
-    buf.Reset()
-    message.Send(&buf)
+	attr := &plumb.Attribute{
+		Name:  "mode",
+		Value: mode,
+	}
+	message := &plumb.Message{
+		Src:  "mGu",
+		Dst:  "music",
+		Dir:  "/mnt/mGu",
+		Type: "text",
+		Attr: attr,
+		Data: []byte(msg),
+	}
+	var buf bytes.Buffer
+	buf.Reset()
+	message.Send(&buf)
 }
 
 func (queue *Queue) Length() int {
@@ -88,7 +88,7 @@ func (music *Music) Status(cbChannel chan Mode) {
 
 func initCallback(music *Music) {
 	cbChannel := make(chan Mode, 10)
-	f := func () {
+	f := func() {
 		cbChannel <- Play
 	}
 	go music.Status(cbChannel)
@@ -97,12 +97,12 @@ func initCallback(music *Music) {
 
 func Init() {
 	sdl.Init(sdl.INIT_AUDIO)
-	if (!mix.OpenAudio(44100, sdl.AUDIO_S16, mix.DEFAULT_CHANNELS, 4096)){
+	if !mix.OpenAudio(44100, sdl.AUDIO_S16, mix.DEFAULT_CHANNELS, 4096) {
 		fmt.Print("Could not init the mixer correctly")
 	}
 }
 
-func NewMusic() *Music{
+func NewMusic() *Music {
 	m := new(Music)
 	m.playlist = new(Playlist)
 	m.queue = new(Queue)
@@ -140,7 +140,7 @@ func (music *Music) Stop() {
 }
 
 func (music *Music) Current() string {
-	if(music.queue != nil) {
+	if music.queue != nil {
 		return music.queue.list.entry
 	}
 	if music.playlist.current >= 0 {
@@ -160,7 +160,7 @@ func (music *Music) Next(steps int) {
 	} else {
 		for ; steps < 0; steps++ {
 			music.playlist.current--
-			if(music.playlist.current < 0) {
+			if music.playlist.current < 0 {
 				music.playlist.current = len(music.playlist.entries) - 1
 			}
 		}
@@ -171,8 +171,8 @@ func listAdd(list **List, elems ...string) {
 	tmp := *list
 	for ; tmp != nil && tmp.next != nil; tmp = tmp.next {
 	}
-	for _,elem := range elems {
-		if(tmp == nil) {
+	for _, elem := range elems {
+		if tmp == nil {
 			tmp = new(List)
 			*list = tmp
 		}
@@ -184,24 +184,24 @@ func listAdd(list **List, elems ...string) {
 
 func (music *Music) Write(fid *srv.FFid, buf []byte, offset uint64) (int, error) {
 	str := strings.TrimSpace(string(buf))
-	if strings.HasPrefix(str,"play") && music.mode != Play {
-		if len(music.playlist.entries) + music.queue.Length() > 0 {
+	if strings.HasPrefix(str, "play") && music.mode != Play {
+		if len(music.playlist.entries)+music.queue.Length() > 0 {
 			music.Play(0)
 		}
-	} else if strings.HasPrefix(str,"stop") && music.mode == Play {
+	} else if strings.HasPrefix(str, "stop") && music.mode == Play {
 		music.Stop()
-	} else if strings.HasPrefix(str,"pause") {
+	} else if strings.HasPrefix(str, "pause") {
 		Plumb("play", music.Current())
 		music.mode = Pause
 		mix.PauseMusic()
-	} else if strings.HasPrefix(str,"skip") {
+	} else if strings.HasPrefix(str, "skip") {
 		var i int
 		s := strings.Split(str, " ")
 		if len(s) == 1 {
 			i = 1
 			music.Next(1)
 		} else {
-			j,err := strconv.Atoi(strings.TrimSpace(s[1]))
+			j, err := strconv.Atoi(strings.TrimSpace(s[1]))
 			if err == nil {
 				music.Next(j)
 			}
@@ -296,7 +296,7 @@ func main() {
 	}
 
 	music = NewMusic()
-    err = music.Add(root, "ctl", user, nil, 0666, music)
+	err = music.Add(root, "ctl", user, nil, 0666, music)
 	if err != nil {
 		goto error
 	}
