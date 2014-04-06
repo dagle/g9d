@@ -4,7 +4,7 @@ import (
 	"github.com/jackyb/go-sdl2/sdl_mixer"
 	"github.com/jackyb/go-sdl2/sdl"
 	"code.google.com/p/go9p/p"
-    "code.google.com/p/go9p/p/srv"
+	"code.google.com/p/go9p/p/srv"
 	"code.google.com/p/goplan9/plumb"
 	"strconv"
 	"fmt"
