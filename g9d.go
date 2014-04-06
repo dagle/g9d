@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"code.google.com/p/go9p/p"
 	"code.google.com/p/go9p/p/srv"
 	"code.google.com/p/goplan9/plumb"
+	"code.google.com/p/goplan9/plan9/client"
 	"fmt"
 	"github.com/jackyb/go-sdl2/sdl"
 	"github.com/dagle/go-sdl2/sdl_mixer"
@@ -46,6 +46,8 @@ type List struct {
 	next  *List
 }
 
+var fid *client.Fid
+
 func Plumb(mode, msg string) {
 	attr := &plumb.Attribute{
 		Name:  "mode",
@@ -59,9 +61,9 @@ func Plumb(mode, msg string) {
 		Attr: attr,
 		Data: []byte(msg),
 	}
-	var buf bytes.Buffer
-	buf.Reset()
-	message.Send(&buf)
+	if fid != nil {
+		message.Send(fid)
+	}
 }
 
 func (queue *Queue) Length() int {
@@ -96,6 +98,11 @@ func initCallback(music *Music) {
 }
 
 func Init() {
+	var err error
+	fid, err = plumb.Open("music", 0666)
+	if err != nil {
+		fid = nil
+	}
 	sdl.Init(sdl.INIT_AUDIO)
 	if !mix.OpenAudio(44100, sdl.AUDIO_S16, mix.DEFAULT_CHANNELS, 4096) {
 		fmt.Print("Could not init the mixer correctly")
