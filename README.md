@@ -1,5 +1,4 @@
 ##g9d
-===
 
 An alternative to mpd designed like m9u. It uses a filesystem for controlling it.
 
