@@ -7,7 +7,7 @@ import (
 	"code.google.com/p/goplan9/plumb"
 	"fmt"
 	"github.com/jackyb/go-sdl2/sdl"
-	"github.com/jackyb/go-sdl2/sdl_mixer"
+	"github.com/dagle/go-sdl2/sdl_mixer"
 	"os"
 	"strconv"
 	"strings"
