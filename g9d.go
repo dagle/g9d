@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/go9p/p"
 	"code.google.com/p/go9p/p/srv"
 	"code.google.com/p/goplan9/plumb"
+	"code.google.com/p/goplan9/plan9"
 	"code.google.com/p/goplan9/plan9/client"
 	"fmt"
 	"github.com/jackyb/go-sdl2/sdl"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"log"
 )
 
 type Mode int
@@ -99,7 +101,7 @@ func initCallback(music *Music) {
 
 func Init() {
 	var err error
-	fid, err = plumb.Open("music", 0666)
+	fid, err = plumb.Open("music", plan9.OWRITE)
 	if err != nil {
 		fid = nil
 	}
@@ -147,10 +149,10 @@ func (music *Music) Stop() {
 }
 
 func (music *Music) Current() string {
-	if music.queue != nil {
+	if music.queue.list != nil {
 		return music.queue.list.entry
 	}
-	if music.playlist.current >= 0 {
+	if music.playlist.current >= 0 && len(music.playlist.entries) > 0 {
 		return music.playlist.entries[music.playlist.current]
 	}
 	return ""
@@ -220,8 +222,22 @@ func (music *Music) Write(fid *srv.FFid, buf []byte, offset uint64) (int, error)
 	return 0, nil
 }
 
+func show(mode Mode) string {
+	if mode == Play {
+		return "Playing"
+	}
+	if mode == Stop {
+		return "Stopped"
+	}
+	if mode == Pause {
+		return "Paused"
+	}
+	return ""
+}
+
+
 func (music *Music) Read(fid *srv.FFid, buf []byte, offset uint64) (int, error) {
-	s := fmt.Sprintf("%s", music.Current())
+	s := fmt.Sprintf("%s | %s", show(music.mode), music.Current())
 	b := []byte(s)
 	i := copy(buf, b[offset:])
 	return i, nil
@@ -294,6 +310,7 @@ func main() {
 	var music *Music
 	var s *srv.Fsrv
 	Init()
+	os.Remove(client.Namespace() + "/g9d")
 
 	user := p.OsUsers.Uid2User(os.Geteuid())
 	root := new(srv.File)
@@ -322,11 +339,12 @@ func main() {
 	s.Dotu = true
 	s.Start(s)
 
-	err = s.StartNetListener("tcp", "5640")
+	err = s.StartNetListener("unix", client.Namespace() + "/g9d" )
 	if err != nil {
 		goto error
 	}
 
 error:
+    log.Println(fmt.Sprintf("Error: %s", err))
 	return
 }
