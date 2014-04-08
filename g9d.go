@@ -3,16 +3,17 @@ package main
 import (
 	"code.google.com/p/go9p/p"
 	"code.google.com/p/go9p/p/srv"
-	"code.google.com/p/goplan9/plumb"
 	"code.google.com/p/goplan9/plan9"
 	"code.google.com/p/goplan9/plan9/client"
+	"code.google.com/p/goplan9/plumb"
 	"fmt"
-	"github.com/jackyb/go-sdl2/sdl"
 	"github.com/dagle/go-sdl2/sdl_mixer"
+	"github.com/jackyb/go-sdl2/sdl"
+	"log"
 	"os"
+	"os/user"
 	"strconv"
 	"strings"
-	"log"
 )
 
 type Mode int
@@ -235,7 +236,6 @@ func show(mode Mode) string {
 	return ""
 }
 
-
 func (music *Music) Read(fid *srv.FFid, buf []byte, offset uint64) (int, error) {
 	s := fmt.Sprintf("%s | %s", show(music.mode), music.Current())
 	b := []byte(s)
@@ -309,8 +309,14 @@ func main() {
 	var err error
 	var music *Music
 	var s *srv.Fsrv
+	var usr *user.User
 	Init()
 	os.Remove(client.Namespace() + "/g9d")
+
+	usr, err = user.Current()
+	if err == nil {
+		os.Chdir(usr.HomeDir)
+	}
 
 	user := p.OsUsers.Uid2User(os.Geteuid())
 	root := new(srv.File)
@@ -339,12 +345,12 @@ func main() {
 	s.Dotu = true
 	s.Start(s)
 
-	err = s.StartNetListener("unix", client.Namespace() + "/g9d" )
+	err = s.StartNetListener("unix", client.Namespace()+"/g9d")
 	if err != nil {
 		goto error
 	}
 
 error:
-    log.Println(fmt.Sprintf("Error: %s", err))
+	log.Println(fmt.Sprintf("Error: %s", err))
 	return
 }
