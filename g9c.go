@@ -20,12 +20,12 @@ func absolute(pwd, path string) string {
 }
 
 func updir(str string) (string, string) {
-	dirs := strings.Split(str, "\n")
+	dirs := strings.Split(str, "/")
 	i := len(dirs)
-	if i == 1 {
+	if i <= 1 {
 		return "/", "/"
 	}
-	return strings.Join(dirs[:(i-2)], "/"), dirs[i-1]
+	return strings.Join(dirs[:(i-1)], "/"), dirs[i-1]
 }
 
 func toHome(pwd, dir string) string {
